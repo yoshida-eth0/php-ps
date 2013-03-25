@@ -4,13 +4,14 @@ require_once 'PS/Proc.php';
 require_once 'PS/Exception.php';
 require_once 'POpen4.php';
 
-class PS
+class PS implements ArrayAccess, Iterator
 {
     static public $PS_CMD = "/bin/ps aux";
     static public $KILL_BIN = "/bin/kill";
 
     protected $_keys = null;
     protected $_procs = null;
+    protected $_iterpos = 0;
 
     public function __construct(array $keys=null, array $procs=null)
     {
@@ -61,7 +62,7 @@ class PS
         if ($pos===0) {
             $pattern = "/^".preg_quote($path, "/")."( |$)/";
         } else {
-            $pattern = "/^([^\"']*\/)*".preg_quote($path, "/")."( |$)/";
+            $pattern = "/^([^\"'\/]*\/)*".preg_quote($path, "/")."( |$)/";
         }
         return $this->matchFilter("command", $pattern);
     }
@@ -113,5 +114,56 @@ class PS
 
         $this->_keys = $keys;
         $this->_procs = $procs;
+    }
+
+    // ArrayAccess
+
+    public function offsetExists($offset)
+    {
+        return isset($this->_procs[$offset]);
+    }
+
+    public function offsetGet($offset)
+    {
+        if (isset($this->_procs[$offset])) {
+            return $this->_procs[$offset];
+        }
+    }
+
+    public function offsetSet($offset, $value)
+    {
+        throw new PS_Exception("offsetSet is not implemented");
+    }
+
+    public function offsetUnset($offset)
+    {
+        throw new PS_Exception("offsetUnset is not implemented");
+    }
+
+    // Iterator
+
+    public function rewind()
+    {
+        $this->_iterpos = 0;
+    }
+
+    public function current()
+    {
+        return $this->_procs[$this->_iterpos];
+    }
+
+    public function key()
+    {
+        return $this->_iterpos;
+    }
+
+    public function next()
+    {
+        $this->_iterpos++;
+    }
+
+    public function valid()
+    {
+        return isset($this->_procs[$this->_iterpos]);
     }
 }
