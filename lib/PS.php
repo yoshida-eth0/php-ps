@@ -19,13 +19,30 @@ class PS implements ArrayAccess, Iterator
             $this->_keys = $keys;
             $this->_procs = $procs;
         } else {
-            $this->_fetchAll();
+            $this->_fetch();
         }
     }
 
     public function procs()
     {
         return $this->_procs;
+    }
+
+    public function kill($signal=null)
+    {
+        if (count($this->_procs)) {
+            $cmd = self::$KILL_BIN;
+            if ($signal) {
+                $cmd .= " -".$signal;
+            }
+            foreach ($this->_procs as $proc) {
+                $cmd .= sprintf(" %d", $proc->pid);
+            }
+
+            $p = new POpen4($cmd);
+            $p->close();
+            return $p->exitstatus();
+        }
     }
 
     // filter
@@ -83,7 +100,7 @@ class PS implements ArrayAccess, Iterator
 
     // fetch
 
-    protected function _fetchAll()
+    protected function _fetch()
     {
         $p = new POpen4(self::$PS_CMD);
         $txt = "";
