@@ -9,14 +9,12 @@ class PS implements ArrayAccess, Iterator
     static public $PS_CMD = "/bin/ps aux";
     static public $KILL_BIN = "/bin/kill";
 
-    protected $_keys = null;
     protected $_procs = null;
     protected $_iterpos = 0;
 
-    public function __construct(array $keys=null, array $procs=null)
+    public function __construct(array $procs=null)
     {
-        if (isset($keys, $procs)) {
-            $this->_keys = $keys;
+        if (isset($procs)) {
             $this->_procs = $procs;
         } else {
             $this->_fetch();
@@ -55,7 +53,7 @@ class PS implements ArrayAccess, Iterator
                 $procs[] = $proc;
             }
         }
-        return new self($this->_keys, $procs);
+        return new self($procs);
     }
 
     public function matchFilter($key, $pattern)
@@ -66,7 +64,7 @@ class PS implements ArrayAccess, Iterator
                 $procs[] = $proc;
             }
         }
-        return new self($this->_keys, $procs);
+        return new self($procs);
     }
 
     public function progFilter($path) {
@@ -95,7 +93,7 @@ class PS implements ArrayAccess, Iterator
                 $procs[] = $proc;
             }
         }
-        return new self($this->_keys, $procs);
+        return new self($procs);
     }
 
     // fetch
@@ -124,12 +122,13 @@ class PS implements ArrayAccess, Iterator
         $procs = array();
         foreach ($lines as $line) {
             $values = preg_split("/\s+/", $line, count($keys));
-            $assoc = array_combine($keys, $values);
-            $proc = new PS_Proc($assoc);
-            $procs[] = $proc;
+            if (count($values)==count($keys)) {
+                $assoc = array_combine($keys, $values);
+                $proc = new PS_Proc($assoc);
+                $procs[] = $proc;
+            }
         }
 
-        $this->_keys = $keys;
         $this->_procs = $procs;
     }
 
