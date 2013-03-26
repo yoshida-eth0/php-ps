@@ -67,7 +67,8 @@ class PS implements ArrayAccess, Iterator
         return new self($procs);
     }
 
-    public function progFilter($path) {
+    public function progFilter($path)
+    {
         $pos = strpos($path, "/");
         if (0<$pos) {
             $path = realpath($path);
@@ -80,6 +81,17 @@ class PS implements ArrayAccess, Iterator
             $pattern = "/^([^\"'\/]*\/)*".preg_quote($path, "/")."( |$)/";
         }
         return $this->matchFilter("command", $pattern);
+    }
+
+    public function activeFilter()
+    {
+        $procs = array();
+        foreach ($this->_procs as $proc) {
+            if ($proc->isActive()) {
+                $procs[] = $proc;
+            }
+        }
+        return new self($procs);
     }
 
     public function filter($func)
@@ -107,7 +119,7 @@ class PS implements ArrayAccess, Iterator
         }
         $p->close();
         if (0<$p->exitstatus()) {
-            throw new PS_Exception("ps exitstatus is not success :".$p->exitstatus());
+            throw new PS_Exception("ps exitstatus is not success: ".$p->exitstatus());
         }
 
         $txt = trim($txt);

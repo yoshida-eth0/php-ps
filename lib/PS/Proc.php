@@ -9,10 +9,15 @@ class PS_Proc
         $this->_ps = $ps;
     }
 
+    public function isActive()
+    {
+        return $this->kill(0)===0;
+    }
+
     public function kill($signal=null)
     {
         $cmd = PS::$KILL_BIN;
-        if ($signal) {
+        if (isset($signal)) {
             $cmd .= " -".$signal;
         }
         $cmd .= sprintf(" %d", $this->pid);
