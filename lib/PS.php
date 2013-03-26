@@ -2,6 +2,7 @@
 
 require_once 'PS/Proc.php';
 require_once 'PS/Exception.php';
+require_once 'PS/TimeoutException.php';
 require_once 'POpen4.php';
 
 class PS implements ArrayAccess, Iterator
