@@ -7,19 +7,18 @@ require_once 'POpen4.php';
 
 class PS implements ArrayAccess, Iterator
 {
-    static public $PS_CMD = "/bin/ps aux";
+    static public $PS_BIN = "/bin/ps";
+    static public $PS_OPTION = "aux";
     static public $KILL_BIN = "/bin/kill";
 
+    protected $_keys = null;
     protected $_procs = null;
     protected $_iterpos = 0;
 
-    public function __construct(array $procs=null)
+    protected function __construct(array $keys, array $procs)
     {
-        if (isset($procs)) {
-            $this->_procs = $procs;
-        } else {
-            $this->_fetch();
-        }
+        $this->_keys = $keys;
+        $this->_procs = $procs;
     }
 
     public function procs()
@@ -48,24 +47,30 @@ class PS implements ArrayAccess, Iterator
 
     public function equalFilter($key, $value)
     {
+        if (!in_array($key, $this->_keys)) {
+            throw new PS_Exception("key not found: ".$key);
+        }
         $procs = array();
         foreach ($this->_procs as $proc) {
             if (isset($proc->$key) && $proc->$key==$value) {
                 $procs[] = $proc;
             }
         }
-        return new self($procs);
+        return new self($this->_keys, $procs);
     }
 
     public function matchFilter($key, $pattern)
     {
+        if (!in_array($key, $this->_keys)) {
+            throw new PS_Exception("key not found: ".$key);
+        }
         $procs = array();
         foreach ($this->_procs as $proc) {
             if (isset($proc->$key) && preg_match($pattern, $proc->$key)) {
                 $procs[] = $proc;
             }
         }
-        return new self($procs);
+        return new self($this->_keys, $procs);
     }
 
     public function progFilter($path)
@@ -92,7 +97,7 @@ class PS implements ArrayAccess, Iterator
                 $procs[] = $proc;
             }
         }
-        return new self($procs);
+        return new self($this->_keys, $procs);
     }
 
     public function filter($func)
@@ -106,43 +111,7 @@ class PS implements ArrayAccess, Iterator
                 $procs[] = $proc;
             }
         }
-        return new self($procs);
-    }
-
-    // fetch
-
-    protected function _fetch()
-    {
-        $p = new POpen4(self::$PS_CMD);
-        $txt = "";
-        while (!feof($p->stdout())) {
-            $txt .= fread($p->stdout(), 8192);
-        }
-        $p->close();
-        if (0<$p->exitstatus()) {
-            throw new PS_Exception("ps exitstatus is not success: ".$p->exitstatus());
-        }
-
-        $txt = trim($txt);
-        $lines = preg_split("/(\r\n|\r|\n)/", $txt);
-
-        $head = array_shift($lines);
-        $keys = preg_split("/\s+/", $head);
-        foreach ($keys as $i=>$key) {
-            $keys[$i] = strtolower(str_replace("%", "", $key));
-        }
-
-        $procs = array();
-        foreach ($lines as $line) {
-            $values = preg_split("/\s+/", $line, count($keys));
-            if (count($values)==count($keys)) {
-                $assoc = array_combine($keys, $values);
-                $proc = new PS_Proc($assoc);
-                $procs[] = $proc;
-            }
-        }
-
-        $this->_procs = $procs;
+        return new self($this->_keys, $procs);
     }
 
     // ArrayAccess
@@ -198,8 +167,40 @@ class PS implements ArrayAccess, Iterator
 
     // static
 
-    static public function all()
+    static public function open($ps_option=null)
     {
-        return new self();
+        if (is_null($ps_option)) {
+            $ps_option = self::$PS_OPTION;
+        }
+        $p = new POpen4(self::$PS_BIN." ".$ps_option);
+        $txt = "";
+        while (!feof($p->stdout())) {
+            $txt .= fread($p->stdout(), 8192);
+        }
+        $p->close();
+        if (0<$p->exitstatus()) {
+            throw new PS_Exception("ps exitstatus is not success: ".$p->exitstatus());
+        }
+
+        $txt = trim($txt);
+        $lines = preg_split("/(\r\n|\r|\n)/", $txt);
+
+        $head = array_shift($lines);
+        $keys = preg_split("/\s+/", $head);
+        foreach ($keys as $i=>$key) {
+            $keys[$i] = strtolower(str_replace("%", "", $key));
+        }
+
+        $procs = array();
+        foreach ($lines as $line) {
+            $values = preg_split("/\s+/", trim($line), count($keys));
+            if (count($values)==count($keys)) {
+                $assoc = array_combine($keys, $values);
+                $proc = new PS_Proc($assoc);
+                $procs[] = $proc;
+            }
+        }
+
+        return new self($keys, $procs);
     }
 }
