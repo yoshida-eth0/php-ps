@@ -2,8 +2,7 @@
 
 require_once dirname(__FILE__).'/../lib/PS.php';
 
-$ps = new PS();
-$ps = $ps->equalFilter("user", trim(`whoami`))->progFilter("vim");
+$ps = PS::all()->equalFilter("user", trim(`whoami`))->progFilter("vim");
 foreach ($ps as $proc) {
     echo "waiting: {$proc->pid}\n";
     try {

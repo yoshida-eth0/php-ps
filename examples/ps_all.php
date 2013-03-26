@@ -2,7 +2,7 @@
 
 require_once dirname(__FILE__).'/../lib/PS.php';
 
-$ps = new PS();
+$ps = PS::all();
 foreach ($ps as $proc) {
     echo sprintf("% 6d %s\n", $proc->pid, $proc->command);
 }

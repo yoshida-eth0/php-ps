@@ -195,4 +195,11 @@ class PS implements ArrayAccess, Iterator
     {
         return isset($this->_procs[$this->_iterpos]);
     }
+
+    // static
+
+    static public function all()
+    {
+        return new self();
+    }
 }
