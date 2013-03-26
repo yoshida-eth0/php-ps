@@ -178,7 +178,7 @@ class PS implements ArrayAccess, Iterator
             $txt .= fread($p->stdout(), 8192);
         }
         $p->close();
-        if (0<$p->exitstatus()) {
+        if (0!==$p->exitstatus()) {
             throw new PS_Exception("ps exitstatus is not success: ".$p->exitstatus());
         }
 
@@ -186,7 +186,7 @@ class PS implements ArrayAccess, Iterator
         $lines = preg_split("/(\r\n|\r|\n)/", $txt);
 
         $head = array_shift($lines);
-        $keys = preg_split("/\s+/", $head);
+        $keys = preg_split("/\s+/", trim($head));
         foreach ($keys as $i=>$key) {
             $keys[$i] = strtolower(str_replace("%", "", $key));
         }
