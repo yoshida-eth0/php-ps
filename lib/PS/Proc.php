@@ -2,8 +2,8 @@
 
 class PS_Proc
 {
-    static public $DEFAULT_WAIT_TIMEOUT = 0;        // second, forever
-    static public $DEFAULT_WAIT_INTERVAL = 200000;  // micro second, 0.2 seconds
+    static public $DEFAULT_WAIT_TIMEOUT = 0;    // second, never
+    static public $DEFAULT_WAIT_INTERVAL = 0.2; // second, 0.2 seconds
 
     protected $_ps = null;
 
@@ -38,17 +38,30 @@ class PS_Proc
         if (is_null($interval)) {
             $interval = self::$DEFAULT_WAIT_INTERVAL;
         }
+        if (ctype_digit($interval)) {
+            $sleep = "sleep";
+        } else {
+            $interval *= 1000000;
+            $sleep = "usleep";
+        }
         $endtime = $timeout<=0 ? INF : time()+$timeout;
+
+        // wait loop
         while (true) {
             if (!$this->isActive()) {
+                // exited
                 return true;
             }
             if ($endtime<=time()) {
+                // timeout
                 break;
             }
-            usleep($interval);
+            // sleep
+            $sleep($interval);
         }
-        $mess = sprintf("PS_Proc::wait() timed out: pid=%d timeout=%d interval=%d", $this->pid, $timeout, $interval);
+
+        // timeout
+        $mess = sprintf("PS_Proc::wait() timed out: pid=%d timeout=%ds interval=%dus", $this->pid, $timeout, $interval);
         throw new PS_TimeoutException($mess);
     }
 
