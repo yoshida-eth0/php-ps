@@ -5,11 +5,16 @@ class PS_Proc
     static public $DEFAULT_WAIT_TIMEOUT = 0;    // second, never
     static public $DEFAULT_WAIT_INTERVAL = 0.2; // second, 0.2 seconds
 
-    protected $_ps = null;
+    protected $_assoc = null;
 
-    public function __construct(array $ps)
+    public function __construct(array $assoc)
     {
-        $this->_ps = $ps;
+        $this->_assoc = $assoc;
+    }
+
+    public function assoc()
+    {
+        return $this->_assoc;
     }
 
     public function isActive()
@@ -61,7 +66,7 @@ class PS_Proc
         }
 
         // timeout
-        $mess = sprintf("PS_Proc::wait() timed out: pid=%d timeout=%ds interval=%dus", $this->pid, $timeout, $interval);
+        $mess = sprintf("PS_Proc::wait() timeout: pid=%d timeout=%ds interval=%dus", $this->pid, $timeout, $interval);
         throw new PS_TimeoutException($mess);
     }
 
@@ -69,14 +74,14 @@ class PS_Proc
 
     public function __get($name)
     {
-        if (isset($this->_ps[$name])) {
-            return $this->_ps[$name];
+        if (isset($this->_assoc[$name])) {
+            return $this->_assoc[$name];
         }
         return null;
     }
 
     public function __isset($name)
     {
-        return isset($this->_ps[$name]);
+        return isset($this->_assoc[$name]);
     }
 }

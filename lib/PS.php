@@ -107,7 +107,7 @@ class PS implements ArrayAccess, Iterator
         }
         $procs = array();
         foreach ($this->_procs as $proc) {
-            if ($func($proc)) {
+            if (call_user_func($func, $proc)) {
                 $procs[] = $proc;
             }
         }
