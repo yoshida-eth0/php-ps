@@ -102,8 +102,8 @@ class PS implements ArrayAccess, Iterator
 
     public function filter($func)
     {
-        if (is_callable($func)) {
-            throw new PS_Exception("func is not callable: ".$func);
+        if (!is_callable($func)) {
+            throw new PS_Exception("func is not callable");
         }
         $procs = array();
         foreach ($this->_procs as $proc) {
